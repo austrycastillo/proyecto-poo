@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Blockchain</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#000;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.login-container{
+    width:400px;
+    background:#0d0d0d;
+    border:2px solid #00ff66;
+    border-radius:15px;
+    padding:30px;
+    box-shadow:0 0 20px #00ff66;
+}
+
+h2{
+    color:#00ff66;
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+label{
+    display:block;
+    color:#00ff66;
+    margin-bottom:5px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    border:1px solid #00ff66;
+    border-radius:8px;
+    background:#111;
+    color:white;
+    outline:none;
+}
+
+input:focus{
+    box-shadow:0 0 10px #00ff66;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#00ff66;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    background:#00cc55;
+}
+
+.status{
+    margin-top:15px;
+    text-align:center;
+    color:white;
+    word-break:break-word;
+}
+
+.success{
+    color:#00ff66;
+}
+
+.error{
+    color:#ff4444;
+}
+
+.wallet{
+    margin-top:10px;
+    color:#00ff66;
+    font-size:12px;
+    text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>LOGIN BLOCKCHAIN</h2>
+
+    <div class="input-group">
+        <label>Usuario</label>
+        <input type="text" id="username" placeholder="Ingrese usuario">
+    </div>
+
+    <button onclick="loginBlockchain()">
+        Conectar Wallet y Validar
+    </button>
+
+    <div class="wallet" id="wallet"></div>
+    <div class="status" id="status"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.1/dist/ethers.umd.min.js"></script>
+
+<script>
+async function loginBlockchain() {
+
+    const username = document.getElementById("username").value.trim();
+    const status = document.getElementById("status");
+    const walletInfo = document.getElementById("wallet");
+
+    status.className = "status";
+
+    if(!username){
+        status.innerHTML = "Ingrese un usuario.";
+        status.classList.add("error");
+        return;
+    }
+
+    if(typeof window.ethereum === "undefined"){
+        status.innerHTML = "MetaMask no está instalado.";
+        status.classList.add("error");
+        return;
+    }
+
+    try{
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+
+        await provider.send("eth_requestAccounts", []);
+
+        const signer = await provider.getSigner();
+
+        const address = await signer.getAddress();
+
+        walletInfo.innerHTML =
+            "Wallet: " +
+            address.substring(0,6) +
+            "..." +
+            address.substring(address.length-4);
+
+        const nonce = Date.now();
+
+        const message =
+`Autenticación Blockchain
+
+Usuario: ${username}
+Nonce: ${nonce}`;
+
+        const signature = await signer.signMessage(message);
+
+        status.innerHTML = `
+            <strong>Login válido</strong><br>
+            Usuario: ${username}<br>
+            Dirección: ${address}
+        `;
+
+        status.classList.add("success");
+
+        console.log("Mensaje:", message);
+        console.log("Firma:", signature);
+
+        // Aquí normalmente enviarías:
+        // username, address, message y signature
+        // a un backend para verificar la firma.
+
+    } catch(error){
+        console.error(error);
+
+        status.innerHTML =
+            "La autenticación fue cancelada o produjo un error.";
+
+        status.classList.add("error");
+    }
+}
+</script>
+
+</body>
+</html>
